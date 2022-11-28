@@ -80,6 +80,19 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 project.ext.react = [
     enableHermes: true,  // clean and rebuild if changing
+
+    bundleInStaging: true,
+    bundleInRelease: true,
+    devDisabledInStaging: true,
+
+    // Hotfix: https://github.com/facebook/react-native/issues/33120#issuecomment-1308164580
+    hermesFlagsForVariant: {
+        def v -> v.name.toLowerCase().contains('release') || v.name.toLowerCase().contains('staging') ? ['-w'] : []
+    },
+    deleteDebugFilesForVariant: {
+        def v -> v.name.toLowerCase().contains('release') || v.name.toLowerCase().contains('staging')
+    }
+
 ]
 
 apply from: "../../node_modules/react-native/react.gradle"
@@ -139,8 +152,8 @@ android {
         applicationId "com.testapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 11
+        versionName "0.0.11"
         buildConfigField "boolean", "IS_NEW_ARCHITECTURE_ENABLED", isNewArchitectureEnabled().toString()
 
         if (isNewArchitectureEnabled()) {
@@ -222,6 +235,13 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            applicationIdSuffix ".debug"
+        }
+        staging {
+            signingConfig signingConfigs.debug
+            applicationIdSuffix ".staging"
+            matchingFallbacks = ['release']
+            debuggable false
         }
         release {
             // Caution! In production, you need to generate your own keystore file.
